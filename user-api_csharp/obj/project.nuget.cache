@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "fPc79EWQiAE=",
+  "success": true,
+  "projectFilePath": "/Users/davidcalderon/Downloads/Tarea práctica 5 - Unidad 5/user-api_csharp/user-api_csharp.csproj",
+  "expectedPackageFiles": [
+    "/Users/davidcalderon/.nuget/packages/microsoft.aspnetcore.openapi/10.0.0/microsoft.aspnetcore.openapi.10.0.0.nupkg.sha512",
+    "/Users/davidcalderon/.nuget/packages/microsoft.openapi/2.0.0/microsoft.openapi.2.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}
