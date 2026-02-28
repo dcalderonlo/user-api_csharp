@@ -23,7 +23,7 @@ public class UserService(AppDbContext context) : IUserService
     var emailNormalized = NormalizeEmail(user.Email);
 
     var emailInUse = await context.Users
-      .AnyAsync(u => u.Email.Equals(emailNormalized, StringComparison.CurrentCultureIgnoreCase));
+      .AnyAsync(u => u.Email == emailNormalized);
 
     if (emailInUse)
     {
@@ -55,7 +55,7 @@ public class UserService(AppDbContext context) : IUserService
     var emailNormalized = NormalizeEmail(user.Email);
 
     var emailInUseByAnother = await context.Users
-      .AnyAsync(u => u.Id != id && u.Email.Equals(emailNormalized, StringComparison.CurrentCultureIgnoreCase));
+      .AnyAsync(u => u.Id != id && u.Email == emailNormalized);
 
     if (emailInUseByAnother)
     {
@@ -93,7 +93,7 @@ public class UserService(AppDbContext context) : IUserService
 
   private static string NormalizeEmail(string email)
   {
-    return email.Trim().ToLower();
+    return email.Trim().ToLowerInvariant();
   }
 
   private static bool IsUniqueEmailViolation(DbUpdateException ex)
