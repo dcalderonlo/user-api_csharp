@@ -1,91 +1,74 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using user_api_csharp.src.Data;
-using user_api_csharp.src.Models;
+using user_api_csharp.src.DTOs;
+using user_api_csharp.src.Interfaces;
+using user_api_csharp.src.Mappers;
 
 namespace user_api_csharp.src.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class UsersController(AppDbContext context) : ControllerBase
+public class UsersController(IUserService userService) : ControllerBase
 {
   [HttpGet]
-  public async Task<ActionResult<IEnumerable<User>>> GetUsers()
+  public async Task<ActionResult<IEnumerable<UserResponseDto>>> GetUsers()
   {
-    var users = await context.Users.AsNoTracking().ToListAsync();
-    return Ok(users);
+    var users = await userService.GetAllAsync();
+    return Ok(users.Select(UserMapper.ToResponse));
   }
 
   [HttpGet("{id:int}")]
-  public async Task<ActionResult<User>> GetUser(int id)
+  public async Task<ActionResult<UserResponseDto>> GetUser(int id)
   {
-    var user = await context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
-    return user is null ? NotFound(new { message = "User not found." }) : Ok(user);
+    var user = await userService.GetByIdAsync(id);
+    return user is null ? NotFound(new { message = "User not found." }) : Ok(UserMapper.ToResponse(user));
   }
 
   [HttpPost]
-  public async Task<ActionResult<User>> PostUser([FromBody] User user)
+  public async Task<ActionResult<UserResponseDto>> PostUser([FromBody] UserCreateRequestDto request)
   {
-    var emailNormalized = user.Email.Trim().ToLower();
+    var user = UserMapper.ToEntity(request);
 
-    var emailInUse = await context.Users
-      .AnyAsync(u => u.Email.Equals(emailNormalized, StringComparison.CurrentCultureIgnoreCase));
-
-    if (emailInUse)
+    var result = await userService.CreateAsync(user);
+    if (!result.IsSuccess)
     {
-      return BadRequest(new { message = "The email is already in use." });
+      return BadRequest(new { message = result.ErrorMessage });
     }
 
-    user.Email = emailNormalized;
-    context.Users.Add(user);
-    await context.SaveChangesAsync();
-
-    return CreatedAtAction(nameof(GetUser), new { id = user.Id }, user);
+    return CreatedAtAction(nameof(GetUser), new { id = result.Data!.Id }, UserMapper.ToResponse(result.Data));
   }
 
   [HttpPut("{id:int}")]
-  public async Task<IActionResult> PutUser(int id, [FromBody] User updatedUser)
+  public async Task<IActionResult> PutUser(int id, [FromBody] UserUpdateRequestDto request)
   {
-    if (id != updatedUser.Id)
+    if (id != request.Id)
     {
       return BadRequest(new { message = "The ID in the route does not match the ID of the user." });
     }
 
-    var existingUser = await context.Users.FirstOrDefaultAsync(u => u.Id == id);
-    if (existingUser is null)
+    var updatedUser = UserMapper.ToEntity(request);
+
+    var result = await userService.UpdateAsync(id, updatedUser);
+    if (!result.IsSuccess && result.ErrorCode == UserServiceErrorCodes.NotFound)
     {
       return NotFound(new { message = "User not found." });
     }
 
-    var emailNormalized = updatedUser.Email.Trim().ToLower();
-
-    var emailInUseByAnother = await context.Users
-      .AnyAsync(u => u.Id != id && u.Email.Equals(emailNormalized, StringComparison.CurrentCultureIgnoreCase));
-
-    if (emailInUseByAnother)
+    if (!result.IsSuccess && result.ErrorCode == UserServiceErrorCodes.DuplicateEmail)
     {
-      return BadRequest(new { message = "The email is already in use." });
+      return BadRequest(new { message = result.ErrorMessage });
     }
 
-    existingUser.Name = updatedUser.Name;
-    existingUser.Email = emailNormalized;
-    existingUser.DateOfBirth = updatedUser.DateOfBirth;
-
-    await context.SaveChangesAsync();
     return NoContent();
   }
 
   [HttpDelete("{id:int}")]
   public async Task<IActionResult> DeleteUser(int id)
   {
-    var user = await context.Users.FirstOrDefaultAsync(u => u.Id == id);
-    if (user is null)
+    var result = await userService.DeleteAsync(id);
+    if (!result.IsSuccess && result.ErrorCode == UserServiceErrorCodes.NotFound)
     {
       return NotFound(new { message = "User not found." });
     }
-
-    context.Users.Remove(user);
-    await context.SaveChangesAsync();
 
     return NoContent();
   }
