@@ -1,0 +1,102 @@
+# Build results
+bin/
+obj/
+out/
+.DS_Store
+.tools/
+*.dll
+*.exe
+artifacts/
+
+# Dotnet CLI cache
+*.pidb
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+*.cache
+*.tmp
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio
+.vs/
+*.sln.iml
+*.cachefile
+*.dbmdl
+
+# Rider
+.idea/
+*.sln.DotSettings.user
+
+# Mono auto generated files
+mono_crash.*
+
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Environment-specific configuration
+appsettings.*.json
+!appsettings.json
+!appsettings.Development.json
+appsettings.Local.json
+appsettings.*.local.json
+.env
+.env.*
+
+# Logs
+*.log
+logs/
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+project.lock.json
+project.fragment.lock.json
+*.nuget.props
+*.nuget.targets
+
+# Test results
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+# Publish output
+publish/
+
+# Local databases (SQLite / SQL Server localdb backups)
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.mdf
+*.ldf
+
+# Profiling and diagnostics
+*.psess
+*.vsp
+*.vspx
+*.sap
+
+# DotCover
+*.dotCover
+
+# Backup files
+*.bak
+*.orig
+*~
