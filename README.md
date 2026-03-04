@@ -41,7 +41,7 @@ Flujo principal:
 ## 🗂️ Estructura real del proyecto
 
 ```text
-Tarea práctica 5 - Unidad 5/
+user-api/
 ├── README.md
 ├── docs/
 │   └── images/
@@ -67,7 +67,7 @@ Tarea práctica 5 - Unidad 5/
 │       │   └── User.cs
 │       └── Services/
 │           └── UserService.cs
-└── Tarea práctica 5 - Unidad 5.slnx
+└── user-api.slnx
 ```
 
 ## 🧠 Principios SOLID aplicados
