@@ -8,45 +8,42 @@ using user_api_csharp.src.Data;
 
 #nullable disable
 
-namespace user_api_csharp.src.Migrations
+namespace user_api_csharp.src.Migrations;
+
+[DbContext(typeof(AppDbContext))]
+[Migration("20260227233825_InitialCreate")]
+partial class InitialCreate
 {
-  [DbContext(typeof(AppDbContext))]
-  [Migration("20260227233825_InitialCreate")]
-  partial class InitialCreate
+  /// <inheritdoc />
+  protected override void BuildTargetModel(ModelBuilder modelBuilder)
   {
-    /// <inheritdoc />
-    protected override void BuildTargetModel(ModelBuilder modelBuilder)
-    {
-#pragma warning disable 612, 618
-      modelBuilder.HasAnnotation("ProductVersion", "10.0.0");
+    modelBuilder.HasAnnotation("ProductVersion", "10.0.0");
 
-      modelBuilder.Entity("user_api_csharp.src.Models.User", b =>
-        {
-          b.Property<int>("Id")
-            .ValueGeneratedOnAdd()
-            .HasColumnType("INTEGER");
+    modelBuilder.Entity("user_api_csharp.src.Models.User", b =>
+      {
+        b.Property<int>("Id")
+          .ValueGeneratedOnAdd()
+          .HasColumnType("INTEGER");
 
-          b.Property<string>("Email")
-            .IsRequired()
-            .HasMaxLength(255)
-            .HasColumnType("TEXT");
+        b.Property<string>("Email")
+          .IsRequired()
+          .HasMaxLength(255)
+          .HasColumnType("TEXT");
 
-          b.Property<DateTime>("DateOfBirth")
-            .HasColumnType("TEXT");
+        b.Property<DateTime>("DateOfBirth")
+          .HasColumnType("TEXT");
 
-          b.Property<string>("Name")
-            .IsRequired()
-            .HasMaxLength(100)
-            .HasColumnType("TEXT");
+        b.Property<string>("Name")
+          .IsRequired()
+          .HasMaxLength(100)
+          .HasColumnType("TEXT");
 
-          b.HasKey("Id");
+        b.HasKey("Id");
 
-          b.HasIndex("Email")
-            .IsUnique();
+        b.HasIndex("Email")
+          .IsUnique();
 
-          b.ToTable("Users");
-        });
-#pragma warning restore 612, 618
-    }
+        b.ToTable("Users");
+      });
   }
 }
