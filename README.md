@@ -12,15 +12,22 @@
 ## ✨ Características
 
 - API REST para gestión de usuarios.
+- Autenticación con JSON Web Tokens (JWT).
+- Refresh token para renovar sesión sin relogin.
+- Endpoints protegidos con `[Authorize]`.
 - Operaciones CRUD completas:
 	- `GET /api/users`
 	- `GET /api/users/{id}`
 	- `POST /api/users`
 	- `PUT /api/users/{id}`
 	- `DELETE /api/users/{id}`
+- Endpoints de autenticación:
+	- `POST /api/auth/login`
+	- `POST /api/auth/refresh`
 - Persistencia con Entity Framework Core + SQLite (Code First).
 - Migraciones aplicadas automáticamente al iniciar la aplicación.
 - Validación de correo único a nivel de servicio y base de datos (índice único).
+- Validación de entrada con DataAnnotations (`Required`, `MinLength`, `MaxLength`, `EmailAddress`).
 - Swagger habilitado en entorno de desarrollo.
 
 ## 🧱 Arquitectura del proyecto
@@ -38,6 +45,10 @@ Flujo principal:
 
 `HTTP Request -> Controller -> Service -> DbContext (EF Core) -> SQLite`
 
+Flujo de autenticación:
+
+`Login -> JWT Access Token + Refresh Token -> Authorize -> Refresh`
+
 ## 🗂️ Estructura real del proyecto
 
 ```text
@@ -46,7 +57,7 @@ user-api/
 ├── docs/
 │   └── images/
 ├── user-api_csharp/
-│   ├── Data/
+│   ├── Db/
 │   │   └── users.db
 │   ├── Program.cs
 │   ├── appsettings.json
@@ -117,6 +128,73 @@ dotnet run --project user-api_csharp/user-api_csharp.csproj
 4. Endpoint raíz:
 
 - `http://localhost:5222/`
+
+## 🔐 Configuración JWT
+
+La configuración se encuentra en:
+
+- `user-api_csharp/appsettings.json`
+- `user-api_csharp/appsettings.Development.json`
+
+Campos usados:
+
+- `Jwt:Issuer`
+- `Jwt:Audience`
+- `Jwt:Key`
+- `Jwt:AccessTokenMinutes`
+- `Jwt:RefreshTokenMinutes`
+
+Importante:
+
+- Cambia `Jwt:Key` por una clave larga y aleatoria antes de usar en producción.
+
+## 🧪 Pruebas de autenticación
+
+1. Crear usuario (registro inicial):
+
+```bash
+curl -X POST http://localhost:5222/api/users \
+	-H "Content-Type: application/json" \
+	-d '{
+		"name":"David Calderon",
+		"email":"david@example.com",
+		"password":"Secret1234",
+		"dateOfBirth":"1995-05-20"
+	}'
+```
+
+2. Login para obtener tokens:
+
+```bash
+curl -X POST http://localhost:5222/api/auth/login \
+	-H "Content-Type: application/json" \
+	-d '{
+		"email":"david@example.com",
+		"password":"Secret1234"
+	}'
+```
+
+3. Consumir endpoint protegido con Bearer token:
+
+```bash
+curl http://localhost:5222/api/users \
+	-H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+
+4. Refrescar token:
+
+```bash
+curl -X POST http://localhost:5222/api/auth/refresh \
+	-H "Content-Type: application/json" \
+	-d '{
+		"refreshToken":"<REFRESH_TOKEN>"
+	}'
+```
+
+5. Validación de seguridad:
+
+- `GET /api/users` sin token devuelve `401 Unauthorized`.
+- `GET /api/users` con token válido devuelve `200 OK`.
 
 ### Capturas de pruebas (Swagger)
 

@@ -1,5 +1,6 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using user_api_csharp.src.Security;
 using user_api_csharp.src.Data;
 using user_api_csharp.src.Models;
 using user_api_csharp.src.Interfaces;
@@ -18,7 +19,7 @@ public class UserService(AppDbContext context) : IUserService
     return await context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
   }
 
-  public async Task<ServiceResult<User>> CreateAsync(User user)
+  public async Task<ServiceResult<User>> CreateAsync(User user, string rawPassword)
   {
     var emailNormalized = NormalizeEmail(user.Email);
 
@@ -31,6 +32,7 @@ public class UserService(AppDbContext context) : IUserService
     }
 
     user.Email = emailNormalized;
+    user.PasswordHash = SecurityHasher.ComputeSha256(rawPassword);
     context.Users.Add(user);
 
     try

@@ -22,6 +22,7 @@ public static class UserMapper
     {
       Name = request.Name,
       Email = request.Email,
+      PasswordHash = string.Empty,
       DateOfBirth = request.DateOfBirth
     };
   }

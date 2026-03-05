@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using user_api_csharp.src.DTOs;
 using user_api_csharp.src.Interfaces;
@@ -7,6 +8,7 @@ namespace user_api_csharp.src.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class UsersController(IUserService userService) : ControllerBase
 {
   [HttpGet]
@@ -24,11 +26,12 @@ public class UsersController(IUserService userService) : ControllerBase
   }
 
   [HttpPost]
+  [AllowAnonymous]
   public async Task<ActionResult<UserResponseDto>> PostUser([FromBody] UserCreateRequestDto request)
   {
     var user = UserMapper.ToEntity(request);
 
-    var result = await userService.CreateAsync(user);
+    var result = await userService.CreateAsync(user, request.Password);
     if (!result.IsSuccess)
     {
       return BadRequest(new { message = result.ErrorMessage });

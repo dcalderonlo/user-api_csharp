@@ -6,7 +6,7 @@ public interface IUserService
 {
   Task<IReadOnlyList<User>> GetAllAsync();
   Task<User?> GetByIdAsync(int id);
-  Task<ServiceResult<User>> CreateAsync(User user);
+  Task<ServiceResult<User>> CreateAsync(User user, string rawPassword);
   Task<ServiceResult> UpdateAsync(int id, User user);
   Task<ServiceResult> DeleteAsync(int id);
 }
