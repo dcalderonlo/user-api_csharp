@@ -26,7 +26,6 @@ public class UsersController(IUserService userService) : ControllerBase
   }
 
   [HttpPost]
-  [AllowAnonymous]
   public async Task<ActionResult<UserResponseDto>> PostUser([FromBody] UserCreateRequestDto request)
   {
     var user = UserMapper.ToEntity(request);
