@@ -13,7 +13,7 @@
 
 - API REST para gestión de usuarios.
 - Autenticación con JSON Web Tokens (JWT).
-- Refresh token para renovar sesión sin relogin.
+- Refresh token para renovar sesión sin relogin (cookie `HttpOnly`).
 - Endpoints protegidos con `[Authorize]`.
 - Operaciones CRUD completas:
 	- `GET /api/users`
@@ -24,6 +24,7 @@
 - Endpoints de autenticación:
 	- `POST /api/auth/login`
 	- `POST /api/auth/refresh` (usa cookie `HttpOnly`)
+- Registro de usuarios mediante `POST /api/users`.
 - Persistencia con Entity Framework Core + SQLite (Code First).
 - Migraciones aplicadas automáticamente al iniciar la aplicación.
 - Validación de correo único a nivel de servicio y base de datos (índice único).
@@ -37,8 +38,11 @@ La solución usa una arquitectura por capas simple:
 - **Controllers**: exponen endpoints HTTP y devuelven respuestas REST.
 - **DTOs**: contratos de entrada/salida para no exponer entidades directamente.
 - **Mappers**: conversión entre DTOs y entidad de dominio.
-- **Services**: lógica de negocio (validaciones, reglas de duplicado, CRUD).
+- **Services**: lógica de negocio (validaciones, reglas de duplicado, JWT, refresh tokens).
+- **Interfaces**: contratos de servicios y componentes de seguridad.
+- **Extensions**: configuración modular del arranque (`IServiceCollection` y `WebApplication`).
 - **Data**: `AppDbContext` y configuración EF Core.
+- **Configuration**: opciones tipadas (`JwtOptions`).
 - **Models**: entidad de dominio `User`.
 
 Flujo principal:
@@ -47,7 +51,7 @@ Flujo principal:
 
 Flujo de autenticación:
 
-`Login -> JWT Access Token + Refresh Token (cookie HttpOnly) -> Authorize -> Refresh`
+`Register (POST /api/users) -> Login -> Access Token (body) + Refresh Token (cookie HttpOnly) -> Authorize (Swagger) -> Endpoints protegidos -> Refresh`
 
 ## 🗂️ Estructura real del proyecto
 
@@ -61,22 +65,41 @@ user-api/
 │   │   └── users.db
 │   ├── Program.cs
 │   ├── appsettings.json
+│   ├── appsettings.Development.json
 │   ├── user-api_csharp.csproj
 │   └── src/
+│       ├── Configuration/
+│       │   └── JwtOptions.cs
 │       ├── Controllers/
+│       │   ├── AuthController.cs
 │       │   └── UsersController.cs
 │       ├── DTOs/
 │       │   └── UserDtos.cs
 │       ├── Data/
 │       │   └── AppDbContext.cs
+│       ├── Extensions/
+│       │   ├── ServiceCollectionExtensions.cs
+│       │   └── WebApplicationExtensions.cs
 │       ├── Interfaces/
-│       │   └── IUserService.cs
+│       │   ├── IAuthService.cs
+│       │   ├── IJwtTokenService.cs
+│       │   ├── IPasswordHasher.cs
+│       │   ├── IRefreshTokenFactory.cs
+│       │   ├── IUserService.cs
+│       │   ├── ServiceResult.cs
+│       │   └── UserServiceErrorCodes.cs
 │       ├── Mappers/
 │       │   └── UserMapper.cs
 │       ├── Migrations/
 │       ├── Models/
 │       │   └── User.cs
+│       ├── Security/
+│       │   └── SecurityHasher.cs
 │       └── Services/
+│           ├── AuthService.cs
+│           ├── JwtTokenService.cs
+│           ├── RefreshTokenFactory.cs
+│           ├── Sha256PasswordHasher.cs
 │           └── UserService.cs
 └── user-api.slnx
 ```
@@ -87,18 +110,19 @@ user-api/
 	- `UsersController` se enfoca en HTTP.
 	- `UserService` centraliza la lógica de negocio.
 	- `UserMapper` centraliza el mapeo DTO/entidad.
+	- `JwtTokenService`, `Sha256PasswordHasher` y `RefreshTokenFactory` separan responsabilidades de seguridad.
 
 - **O — Open/Closed**
-	- Puedes extender reglas de negocio en `UserService` sin romper contratos de controlador.
+	- Puedes extender reglas de negocio en `UserService` y autenticación sin romper controladores ni contratos.
 
 - **L — Liskov Substitution**
 	- Se respeta al trabajar mediante contrato `IUserService`.
 
 - **I — Interface Segregation**
-	- `IUserService` expone solo operaciones necesarias del caso de uso Usuarios.
+	- `IUserService`, `IAuthService`, `IPasswordHasher`, `IJwtTokenService` e `IRefreshTokenFactory` exponen contratos específicos.
 
 - **D — Dependency Inversion**
-	- El controlador depende de la abstracción `IUserService`, no de la implementación concreta.
+	- Controladores y servicios dependen de abstracciones (`IUserService`, `IAuthService`, `IPasswordHasher`, etc.), no de implementaciones concretas.
 
 ## ✅ Requisitos
 
@@ -150,7 +174,7 @@ Importante:
 
 ## 🧪 Pruebas de autenticación
 
-1. Crear usuario (registro inicial):
+1. Crear usuario (registro):
 
 ```bash
 curl -X POST http://localhost:5222/api/users \
@@ -179,14 +203,20 @@ Respuesta esperada:
 - `accessToken` en el body.
 - `refreshToken` en cookie `HttpOnly` (no en body).
 
-3. Consumir endpoint protegido con Bearer token:
+3. Autorizar Swagger con el access token:
+
+- Click en `Authorize` en la parte superior de Swagger.
+- Pegar el token JWT.
+- Si Swagger ya maneja esquema bearer, pegar solo el token (sin prefijo `Bearer `).
+
+4. Consumir endpoint protegido:
 
 ```bash
 curl http://localhost:5222/api/users \
 	-H "Authorization: Bearer <ACCESS_TOKEN>"
 ```
 
-4. Refrescar token:
+5. Refrescar token:
 
 ```bash
 curl -b /tmp/auth_cookies.txt -c /tmp/auth_cookies.txt \
@@ -197,7 +227,7 @@ Nota:
 
 - Si no envías la cookie de refresh, el endpoint responde `401 Unauthorized`.
 
-5. Validación de seguridad:
+6. Validación de seguridad:
 
 - `GET /api/users` sin token devuelve `401 Unauthorized`.
 - `GET /api/users` con token válido devuelve `200 OK`.
