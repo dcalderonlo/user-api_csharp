@@ -23,7 +23,7 @@
 	- `DELETE /api/users/{id}`
 - Endpoints de autenticación:
 	- `POST /api/auth/login`
-	- `POST /api/auth/refresh`
+	- `POST /api/auth/refresh` (usa cookie `HttpOnly`)
 - Persistencia con Entity Framework Core + SQLite (Code First).
 - Migraciones aplicadas automáticamente al iniciar la aplicación.
 - Validación de correo único a nivel de servicio y base de datos (índice único).
@@ -47,7 +47,7 @@ Flujo principal:
 
 Flujo de autenticación:
 
-`Login -> JWT Access Token + Refresh Token -> Authorize -> Refresh`
+`Login -> JWT Access Token + Refresh Token (cookie HttpOnly) -> Authorize -> Refresh`
 
 ## 🗂️ Estructura real del proyecto
 
@@ -166,13 +166,18 @@ curl -X POST http://localhost:5222/api/users \
 2. Login para obtener tokens:
 
 ```bash
-curl -X POST http://localhost:5222/api/auth/login \
+curl -c /tmp/auth_cookies.txt -X POST http://localhost:5222/api/auth/login \
 	-H "Content-Type: application/json" \
 	-d '{
 		"email":"david@example.com",
 		"password":"Secret1234"
 	}'
 ```
+
+Respuesta esperada:
+
+- `accessToken` en el body.
+- `refreshToken` en cookie `HttpOnly` (no en body).
 
 3. Consumir endpoint protegido con Bearer token:
 
@@ -184,12 +189,13 @@ curl http://localhost:5222/api/users \
 4. Refrescar token:
 
 ```bash
-curl -X POST http://localhost:5222/api/auth/refresh \
-	-H "Content-Type: application/json" \
-	-d '{
-		"refreshToken":"<REFRESH_TOKEN>"
-	}'
+curl -b /tmp/auth_cookies.txt -c /tmp/auth_cookies.txt \
+	-X POST http://localhost:5222/api/auth/refresh
 ```
+
+Nota:
+
+- Si no envías la cookie de refresh, el endpoint responde `401 Unauthorized`.
 
 5. Validación de seguridad:
 

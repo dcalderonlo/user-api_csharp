@@ -64,15 +64,13 @@ public class LoginRequestDto
   public string Password { get; set; } = string.Empty;
 }
 
-public class RefreshTokenRequestDto
+public class AuthResponseDto
 {
-  [Required]
-  [MinLength(64)]
-  [MaxLength(64)]
-  public string RefreshToken { get; set; } = string.Empty;
+  public string AccessToken { get; set; } = string.Empty;
+  public DateTime AccessTokenExpiresAtUtc { get; set; }
 }
 
-public class AuthResponseDto
+public class AuthTokensDto
 {
   public string AccessToken { get; set; } = string.Empty;
   public string RefreshToken { get; set; } = string.Empty;

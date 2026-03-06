@@ -4,6 +4,6 @@ namespace user_api_csharp.src.Interfaces;
 
 public interface IAuthService
 {
-  Task<AuthResponseDto?> LoginAsync(LoginRequestDto request);
-  Task<AuthResponseDto?> RefreshAsync(RefreshTokenRequestDto request);
+  Task<AuthTokensDto?> LoginAsync(LoginRequestDto request);
+  Task<AuthTokensDto?> RefreshAsync(string refreshToken);
 }

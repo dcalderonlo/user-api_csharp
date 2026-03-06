@@ -13,7 +13,7 @@ namespace user_api_csharp.src.Services;
 
 public class AuthService(AppDbContext context, IConfiguration configuration) : IAuthService
 {
-  public async Task<AuthResponseDto?> LoginAsync(LoginRequestDto request)
+  public async Task<AuthTokensDto?> LoginAsync(LoginRequestDto request)
   {
     var normalizedEmail = request.Email.Trim().ToLowerInvariant();
     var passwordHash = SecurityHasher.ComputeSha256(request.Password);
@@ -27,9 +27,14 @@ public class AuthService(AppDbContext context, IConfiguration configuration) : I
     return await IssueTokensAsync(user);
   }
 
-  public async Task<AuthResponseDto?> RefreshAsync(RefreshTokenRequestDto request)
+  public async Task<AuthTokensDto?> RefreshAsync(string refreshToken)
   {
-    var refreshTokenHash = SecurityHasher.ComputeSha256(request.RefreshToken);
+    if (string.IsNullOrWhiteSpace(refreshToken))
+    {
+      return null;
+    }
+
+    var refreshTokenHash = SecurityHasher.ComputeSha256(refreshToken);
 
     var user = await context.Users.FirstOrDefaultAsync(u =>
       u.RefreshTokenHash == refreshTokenHash
@@ -44,7 +49,7 @@ public class AuthService(AppDbContext context, IConfiguration configuration) : I
     return await IssueTokensAsync(user);
   }
 
-  private async Task<AuthResponseDto> IssueTokensAsync(User user)
+  private async Task<AuthTokensDto> IssueTokensAsync(User user)
   {
     var jwtSection = configuration.GetSection("Jwt");
     var issuer = jwtSection["Issuer"] ?? throw new InvalidOperationException("Jwt:Issuer is not configured.");
@@ -65,7 +70,7 @@ public class AuthService(AppDbContext context, IConfiguration configuration) : I
 
     await context.SaveChangesAsync();
 
-    return new AuthResponseDto
+    return new AuthTokensDto
     {
       AccessToken = accessToken,
       RefreshToken = refreshToken,

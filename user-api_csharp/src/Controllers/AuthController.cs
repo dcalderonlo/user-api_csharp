@@ -9,29 +9,60 @@ namespace user_api_csharp.src.Controllers;
 [Route("api/[controller]")]
 public class AuthController(IAuthService authService) : ControllerBase
 {
+  private const string RefreshCookieName = "refreshToken";
+
   [AllowAnonymous]
   [HttpPost("login")]
   public async Task<ActionResult<AuthResponseDto>> Login([FromBody] LoginRequestDto request)
   {
-    var authResult = await authService.LoginAsync(request);
-    if (authResult is null)
+    var tokens = await authService.LoginAsync(request);
+    if (tokens is null)
     {
       return Unauthorized(new { message = "Invalid credentials." });
     }
 
-    return Ok(authResult);
+    SetRefreshTokenCookie(tokens.RefreshToken, tokens.RefreshTokenExpiresAtUtc);
+
+    return Ok(new AuthResponseDto
+    {
+      AccessToken = tokens.AccessToken,
+      AccessTokenExpiresAtUtc = tokens.AccessTokenExpiresAtUtc
+    });
   }
 
   [AllowAnonymous]
   [HttpPost("refresh")]
-  public async Task<ActionResult<AuthResponseDto>> Refresh([FromBody] RefreshTokenRequestDto request)
+  public async Task<ActionResult<AuthResponseDto>> Refresh()
   {
-    var authResult = await authService.RefreshAsync(request);
-    if (authResult is null)
+    if (!Request.Cookies.TryGetValue(RefreshCookieName, out var refreshToken) || string.IsNullOrWhiteSpace(refreshToken))
+    {
+      return Unauthorized(new { message = "Refresh token cookie is missing." });
+    }
+
+    var tokens = await authService.RefreshAsync(refreshToken);
+    if (tokens is null)
     {
       return Unauthorized(new { message = "Invalid or expired refresh token." });
     }
 
-    return Ok(authResult);
+    SetRefreshTokenCookie(tokens.RefreshToken, tokens.RefreshTokenExpiresAtUtc);
+
+    return Ok(new AuthResponseDto
+    {
+      AccessToken = tokens.AccessToken,
+      AccessTokenExpiresAtUtc = tokens.AccessTokenExpiresAtUtc
+    });
+  }
+
+  private void SetRefreshTokenCookie(string refreshToken, DateTime refreshTokenExpiresAtUtc)
+  {
+    Response.Cookies.Append(RefreshCookieName, refreshToken, new CookieOptions
+    {
+      HttpOnly = true,
+      Secure = Request.IsHttps,
+      SameSite = SameSiteMode.Strict,
+      Expires = new DateTimeOffset(refreshTokenExpiresAtUtc),
+      Path = "/api/auth"
+    });
   }
 }
