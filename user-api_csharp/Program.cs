@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using user_api_csharp.src.Configuration;
 using user_api_csharp.src.Data;
 using user_api_csharp.src.Interfaces;
@@ -14,7 +15,23 @@ Directory.CreateDirectory(dbDirectory);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+  options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+  {
+    Name = "Authorization",
+    Description = "JWT Authorization header using the Bearer scheme. Example: Bearer {token}",
+    In = ParameterLocation.Header,
+    Type = SecuritySchemeType.Http,
+    Scheme = "bearer",
+    BearerFormat = "JWT"
+  });
+
+  options.AddSecurityRequirement(doc => new OpenApiSecurityRequirement
+  {
+    [new OpenApiSecuritySchemeReference("Bearer", doc, null)] = []
+  });
+});
 
 builder.Services
   .AddOptions<JwtOptions>()
@@ -63,7 +80,10 @@ using (var scope = app.Services.CreateScope())
 if (app.Environment.IsDevelopment())
 {
   app.UseSwagger();
-  app.UseSwaggerUI();
+  app.UseSwaggerUI(options =>
+  {
+    options.ConfigObject.PersistAuthorization = true;
+  });
 }
 
 app.UseHttpsRedirection();

@@ -62,7 +62,7 @@ public class AuthController(IAuthService authService) : ControllerBase
       Secure = Request.IsHttps,
       SameSite = SameSiteMode.Strict,
       Expires = new DateTimeOffset(refreshTokenExpiresAtUtc),
-      Path = "/api/auth"
+      Path = "/api"
     });
   }
 }
