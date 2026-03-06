@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using user_api_csharp.src.Configuration;
 using user_api_csharp.src.Data;
 using user_api_csharp.src.Interfaces;
 using user_api_csharp.src.Services;
@@ -15,11 +16,15 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-var jwtSection = builder.Configuration.GetSection("Jwt");
-var jwtKey = jwtSection["Key"] ?? throw new InvalidOperationException("Jwt:Key is not configured.");
-var jwtIssuer = jwtSection["Issuer"] ?? throw new InvalidOperationException("Jwt:Issuer is not configured.");
-var jwtAudience = jwtSection["Audience"] ?? throw new InvalidOperationException("Jwt:Audience is not configured.");
-var keyBytes = Encoding.UTF8.GetBytes(jwtKey);
+builder.Services
+  .AddOptions<JwtOptions>()
+  .Bind(builder.Configuration.GetSection(JwtOptions.SectionName))
+  .ValidateDataAnnotations()
+  .ValidateOnStart();
+
+var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
+  ?? throw new InvalidOperationException("Jwt settings are not configured.");
+var keyBytes = Encoding.UTF8.GetBytes(jwtOptions.Key);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
   .AddJwtBearer(options =>
@@ -29,9 +34,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
       ValidateIssuerSigningKey = true,
       IssuerSigningKey = new SymmetricSecurityKey(keyBytes),
       ValidateIssuer = true,
-      ValidIssuer = jwtIssuer,
+      ValidIssuer = jwtOptions.Issuer,
       ValidateAudience = true,
-      ValidAudience = jwtAudience,
+      ValidAudience = jwtOptions.Audience,
       ValidateLifetime = true,
       ClockSkew = TimeSpan.Zero
     };
@@ -43,6 +48,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
   options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IPasswordHasher, Sha256PasswordHasher>();
+builder.Services.AddScoped<IRefreshTokenFactory, RefreshTokenFactory>();
+builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 
 var app = builder.Build();
 

@@ -1,13 +1,12 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using user_api_csharp.src.Security;
 using user_api_csharp.src.Data;
 using user_api_csharp.src.Models;
 using user_api_csharp.src.Interfaces;
 
 namespace user_api_csharp.src.Services;
 
-public class UserService(AppDbContext context) : IUserService
+public class UserService(AppDbContext context, IPasswordHasher passwordHasher) : IUserService
 {
   public async Task<IReadOnlyList<User>> GetAllAsync()
   {
@@ -32,7 +31,7 @@ public class UserService(AppDbContext context) : IUserService
     }
 
     user.Email = emailNormalized;
-    user.PasswordHash = SecurityHasher.ComputeSha256(rawPassword);
+    user.PasswordHash = passwordHasher.Hash(rawPassword);
     context.Users.Add(user);
 
     try
