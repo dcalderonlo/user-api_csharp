@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace user_api_csharp.src.Migrations;
+namespace user_api_csharp.src.Data.Migrations;
 
 /// <inheritdoc />
 public partial class InitialCreate : Migration

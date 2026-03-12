@@ -1,6 +1,7 @@
 using user_api_csharp.src.Models;
+using user_api_csharp.src.Common;
 
-namespace user_api_csharp.src.Interfaces;
+namespace user_api_csharp.src.Services.Interfaces;
 
 public interface IUserService
 {

@@ -1,4 +1,4 @@
-namespace user_api_csharp.src.Interfaces;
+namespace user_api_csharp.src.Common;
 
 public sealed record ServiceResult(string? ErrorCode = null, string? ErrorMessage = null)
 {

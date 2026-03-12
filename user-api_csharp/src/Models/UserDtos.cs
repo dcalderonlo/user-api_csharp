@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace user_api_csharp.src.DTOs;
+namespace user_api_csharp.src.Models;
 
 public class UserCreateRequestDto
 {

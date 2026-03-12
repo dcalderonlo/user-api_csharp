@@ -1,10 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using System.Security.Cryptography;
+using System.Text;
 using user_api_csharp.src.Configuration;
 using user_api_csharp.src.Data;
-using user_api_csharp.src.DTOs;
-using user_api_csharp.src.Interfaces;
 using user_api_csharp.src.Models;
+using user_api_csharp.src.Services.Interfaces;
 
 namespace user_api_csharp.src.Services;
 
@@ -18,10 +19,9 @@ public class AuthService(
   public async Task<AuthTokensDto?> LoginAsync(LoginRequestDto request)
   {
     var normalizedEmail = request.Email.Trim().ToLowerInvariant();
-    var passwordHash = passwordHasher.Hash(request.Password);
 
     var user = await context.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail);
-    if (user is null || user.PasswordHash != passwordHash)
+    if (user is null || !passwordHasher.Verify(request.Password, user.PasswordHash))
     {
       return null;
     }
@@ -36,7 +36,7 @@ public class AuthService(
       return null;
     }
 
-    var refreshTokenHash = passwordHasher.Hash(refreshToken);
+    var refreshTokenHash = RefreshTokenHash(refreshToken);
 
     var user = await context.Users.FirstOrDefaultAsync(u =>
       u.RefreshTokenHash == refreshTokenHash
@@ -57,7 +57,7 @@ public class AuthService(
     var refreshToken = refreshTokenFactory.Create();
     var refreshTokenExpiresAt = DateTime.UtcNow.AddMinutes(jwtOptions.Value.RefreshTokenMinutes);
 
-    user.RefreshTokenHash = passwordHasher.Hash(refreshToken);
+    user.RefreshTokenHash = RefreshTokenHash(refreshToken);
     user.RefreshTokenExpiresAt = refreshTokenExpiresAt;
 
     await context.SaveChangesAsync();
@@ -69,5 +69,12 @@ public class AuthService(
       AccessTokenExpiresAtUtc = accessToken.ExpiresAtUtc,
       RefreshTokenExpiresAtUtc = refreshTokenExpiresAt
     };
+  }
+
+  private static string RefreshTokenHash(string value)
+  {
+    var bytes = Encoding.UTF8.GetBytes(value);
+    var hash = SHA256.HashData(bytes);
+    return Convert.ToHexString(hash).ToLowerInvariant();
   }
 }

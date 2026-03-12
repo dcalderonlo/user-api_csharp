@@ -1,4 +1,4 @@
-namespace user_api_csharp.src.Interfaces;
+namespace user_api_csharp.src.Common;
 
 public static class UserServiceErrorCodes
 {

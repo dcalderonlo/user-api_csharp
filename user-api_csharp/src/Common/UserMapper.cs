@@ -1,7 +1,6 @@
-using user_api_csharp.src.DTOs;
 using user_api_csharp.src.Models;
 
-namespace user_api_csharp.src.Mappers;
+namespace user_api_csharp.src.Common;
 
 public static class UserMapper
 {

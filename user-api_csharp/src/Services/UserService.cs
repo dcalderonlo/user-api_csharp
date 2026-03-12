@@ -2,7 +2,8 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using user_api_csharp.src.Data;
 using user_api_csharp.src.Models;
-using user_api_csharp.src.Interfaces;
+using user_api_csharp.src.Common;
+using user_api_csharp.src.Services.Interfaces;
 
 namespace user_api_csharp.src.Services;
 

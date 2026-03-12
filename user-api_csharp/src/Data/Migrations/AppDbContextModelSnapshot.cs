@@ -7,7 +7,7 @@ using user_api_csharp.src.Data;
 
 #nullable disable
 
-namespace user_api_csharp.src.Migrations
+namespace user_api_csharp.src.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
     partial class AppDbContextModelSnapshot : ModelSnapshot

@@ -13,6 +13,7 @@
 
 - API REST para gestión de usuarios.
 - Autenticación con JSON Web Tokens (JWT).
+- Hashing seguro de contraseñas con **bcrypt** (workFactor: 12).
 - Refresh token para renovar sesión sin relogin (cookie `HttpOnly`).
 - Endpoints protegidos con `[Authorize]`.
 - Operaciones CRUD completas:
@@ -36,14 +37,13 @@
 La solución usa una arquitectura por capas simple:
 
 - **Controllers**: exponen endpoints HTTP y devuelven respuestas REST.
-- **DTOs**: contratos de entrada/salida para no exponer entidades directamente.
-- **Mappers**: conversión entre DTOs y entidad de dominio.
-- **Services**: lógica de negocio (validaciones, reglas de duplicado, JWT, refresh tokens).
-- **Interfaces**: contratos de servicios y componentes de seguridad.
-- **Extensions**: configuración modular del arranque (`IServiceCollection` y `WebApplication`).
-- **Data**: `AppDbContext` y configuración EF Core.
+- **Models**: entidad `User` y DTOs de entrada/salida (`UserCreateRequestDto`, `UserUpdateRequestDto`, `UserResponseDto`, `LoginRequestDto`, `AuthResponseDto`, `AuthTokensDto`).
+- **Services**: lógica de negocio, autenticación JWT, refresh tokens y gestión de usuarios (`UserService`, `AuthService`, `JwtTokenService`, `PasswordHasher`, `RefreshTokenFactory`).
+- **Services/Interfaces**: contratos de servicios (`IUserService`, `IAuthService`, `IPasswordHasher`, `IJwtTokenService`, `IRefreshTokenFactory`).
+- **Common**: utilidades transversales (`ServiceResult`, `UserServiceErrorCodes`, `UserMapper`).
+- **Data**: `AppDbContext` y configuración EF Core; migraciones en `Data/Migrations/`.
 - **Configuration**: opciones tipadas (`JwtOptions`).
-- **Models**: entidad de dominio `User`.
+- **Program.cs**: configuración de servicios, middleware y pipeline de la aplicación (extensiones inlininadas).
 
 Flujo principal:
 
@@ -73,56 +73,78 @@ user-api/
 │       ├── Controllers/
 │       │   ├── AuthController.cs
 │       │   └── UsersController.cs
-│       ├── DTOs/
-│       │   └── UserDtos.cs
-│       ├── Data/
-│       │   └── AppDbContext.cs
-│       ├── Extensions/
-│       │   ├── ServiceCollectionExtensions.cs
-│       │   └── WebApplicationExtensions.cs
-│       ├── Interfaces/
-│       │   ├── IAuthService.cs
-│       │   ├── IJwtTokenService.cs
-│       │   ├── IPasswordHasher.cs
-│       │   ├── IRefreshTokenFactory.cs
-│       │   ├── IUserService.cs
+│       ├── Common/
 │       │   ├── ServiceResult.cs
-│       │   └── UserServiceErrorCodes.cs
-│       ├── Mappers/
+│       │   ├── UserServiceErrorCodes.cs
 │       │   └── UserMapper.cs
-│       ├── Migrations/
+│       ├── Data/
+│       │   ├── AppDbContext.cs
+│       │   └── Migrations/
+│       │       ├── 20260227233825_InitialCreate.cs
+│       │       ├── 20260227233825_InitialCreate.Designer.cs
+│       │       ├── 20260305185548_AddJwtAuthFields.cs
+│       │       ├── 20260305185548_AddJwtAuthFields.Designer.cs
+│       │       └── AppDbContextModelSnapshot.cs
 │       ├── Models/
-│       │   └── User.cs
-│       ├── Security/
-│       │   └── SecurityHasher.cs
+│       │   ├── User.cs
+│       │   └── UserDtos.cs
 │       └── Services/
 │           ├── AuthService.cs
 │           ├── JwtTokenService.cs
+│           ├── PasswordHasher.cs
 │           ├── RefreshTokenFactory.cs
-│           ├── Sha256PasswordHasher.cs
-│           └── UserService.cs
+│           ├── UserService.cs
+│           └── Interfaces/
+│               ├── IAuthService.cs
+│               ├── IJwtTokenService.cs
+│               ├── IPasswordHasher.cs
+│               ├── IRefreshTokenFactory.cs
+│               └── IUserService.cs
 └── user-api.slnx
 ```
 
 ## 🧠 Principios SOLID aplicados
 
 - **S — Single Responsibility**
-	- `UsersController` se enfoca en HTTP.
-	- `UserService` centraliza la lógica de negocio.
+	- `UsersController` y `AuthController` se enfocan en HTTP.
+	- `UserService` centraliza la lógica de negocio de usuarios.
+	- `AuthService` centraliza lógica de autenticación y refresh tokens.
 	- `UserMapper` centraliza el mapeo DTO/entidad.
-	- `JwtTokenService`, `Sha256PasswordHasher` y `RefreshTokenFactory` separan responsabilidades de seguridad.
+	- `JwtTokenService`, `PasswordHasher` y `RefreshTokenFactory` separan responsabilidades de seguridad.
 
 - **O — Open/Closed**
 	- Puedes extender reglas de negocio en `UserService` y autenticación sin romper controladores ni contratos.
 
 - **L — Liskov Substitution**
-	- Se respeta al trabajar mediante contrato `IUserService`.
+	- Se respeta al trabajar mediante contrato `IUserService` e `IAuthService`.
 
 - **I — Interface Segregation**
 	- `IUserService`, `IAuthService`, `IPasswordHasher`, `IJwtTokenService` e `IRefreshTokenFactory` exponen contratos específicos.
 
 - **D — Dependency Inversion**
 	- Controladores y servicios dependen de abstracciones (`IUserService`, `IAuthService`, `IPasswordHasher`, etc.), no de implementaciones concretas.
+
+## 📝 Cambios recientes
+
+### Arquitectura simplificada
+- Reorganización de carpetas para mayor cohesión:
+  - DTOs movidos a `Models/` para estar junto a las entidades que representan.
+  - Interfaces de servicios movidas a `Services/Interfaces/` (conceptualmente pertenecen a la capa de servicios).
+  - Utilidades transversales (`ServiceResult`, `UserServiceErrorCodes`, `UserMapper`) movidas a `Common/`.
+  - Migraciones de EF Core movidas a `Data/Migrations/` (son artefactos de la capa de datos).
+- Carpetas eliminadas por simplicidad:
+  - `Extensions/` (configuración inlininada en `Program.cs`).
+  - `Security/` (funciones consolidadas en servicios).
+  - `Mappers/`, `Interfaces/`, `DTOs/` (reorganizadas en destinos más lógicos).
+
+### Integración de bcrypt
+- Las contraseñas de usuario ahora se hashean con **bcrypt** (configuración de workFactor: 12).
+  - Más seguro que SHA-256 gracias al salt aleatorio y coste computacional.
+  - Método `IPasswordHasher.Verify()` permite validar sin comparación directa.
+- Los refresh tokens continúan usando SHA-256 determinista para:
+  - Permitir búsquedas rápidas por igualdad en BD.
+  - Mantener eficiencia sin comprometer seguridad del refresh token opaco.
+- Paquete agregado: `BCrypt.Net-Next` v4.0.3.
 
 ## ✅ Requisitos
 

@@ -4,7 +4,7 @@ using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using user_api_csharp.src.Configuration;
-using user_api_csharp.src.Interfaces;
+using user_api_csharp.src.Services.Interfaces;
 using user_api_csharp.src.Models;
 
 namespace user_api_csharp.src.Services;
