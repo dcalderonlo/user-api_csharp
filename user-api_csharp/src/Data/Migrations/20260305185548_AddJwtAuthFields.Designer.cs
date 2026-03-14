@@ -10,55 +10,55 @@ using user_api_csharp.src.Data;
 
 namespace user_api_csharp.src.Data.Migrations
 {
-    [DbContext(typeof(AppDbContext))]
-    [Migration("20260305185548_AddJwtAuthFields")]
-    partial class AddJwtAuthFields
+  [DbContext(typeof(AppDbContext))]
+  [Migration("20260305185548_AddJwtAuthFields")]
+  partial class AddJwtAuthFields
+  {
+    /// <inheritdoc />
+    protected override void BuildTargetModel(ModelBuilder modelBuilder)
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
-        {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.0");
+      modelBuilder.HasAnnotation("ProductVersion", "10.0.0");
 
-            modelBuilder.Entity("user_api_csharp.src.Models.User", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+      modelBuilder.Entity("user_api_csharp.src.Models.User", b =>
+        {
+          b.Property<int>("Id")
+            .ValueGeneratedOnAdd()
+            .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("DateOfBirth")
-                        .HasColumnType("TEXT");
+          b.Property<DateTime>("DateOfBirth")
+            .HasColumnType("TEXT");
 
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("TEXT");
+          b.Property<string>("Email")
+            .IsRequired()
+            .HasMaxLength(255)
+            .HasColumnType("TEXT");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+          b.Property<string>("Name")
+            .IsRequired()
+            .HasMaxLength(100)
+            .HasColumnType("TEXT");
 
-                    b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("TEXT");
+          b.Property<string>("PasswordHash")
+            .IsRequired()
+            .HasMaxLength(64)
+            .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("RefreshTokenExpiresAt")
-                        .HasColumnType("TEXT");
+          b.Property<DateTime?>("RefreshTokenExpiresAt")
+            .HasColumnType("TEXT");
 
-                    b.Property<string>("RefreshTokenHash")
-                        .HasMaxLength(64)
-                        .HasColumnType("TEXT");
+          b.Property<string>("RefreshTokenHash")
+            .HasMaxLength(64)
+            .HasColumnType("TEXT");
 
-                    b.HasKey("Id");
+          b.HasKey("Id");
 
-                    b.HasIndex("Email")
-                        .IsUnique();
+          b.HasIndex("Email")
+            .IsUnique();
 
-                    b.ToTable("Users");
-                });
+          b.ToTable("Users");
+        });
 #pragma warning restore 612, 618
-        }
-    }
+      }
+  }
 }

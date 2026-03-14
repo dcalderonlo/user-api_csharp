@@ -1,8 +1,8 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using user_api_csharp.src.Common;
 using user_api_csharp.src.Models;
 using user_api_csharp.src.Services.Interfaces;
-using user_api_csharp.src.Common;
 
 namespace user_api_csharp.src.Controllers;
 

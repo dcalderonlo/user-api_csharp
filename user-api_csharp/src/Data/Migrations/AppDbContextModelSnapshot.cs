@@ -9,53 +9,152 @@ using user_api_csharp.src.Data;
 
 namespace user_api_csharp.src.Data.Migrations
 {
-    [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+  [DbContext(typeof(AppDbContext))]
+  partial class AppDbContextModelSnapshot : ModelSnapshot
+  {
+    protected override void BuildModel(ModelBuilder modelBuilder)
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
-        {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.0");
+      modelBuilder.HasAnnotation("ProductVersion", "10.0.0");
 
-            modelBuilder.Entity("user_api_csharp.src.Models.User", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+      modelBuilder.Entity("user_api_csharp.src.Models.Category", b =>
+        {
+          b.Property<int>("Id")
+            .ValueGeneratedOnAdd()
+            .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("DateOfBirth")
-                        .HasColumnType("TEXT");
+          b.Property<string>("Name")
+            .IsRequired()
+            .HasMaxLength(100)
+            .HasColumnType("TEXT");
 
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("TEXT");
+          b.HasKey("Id");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+          b.ToTable("Categories");
+        });
 
-                    b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("TEXT");
+      modelBuilder.Entity("user_api_csharp.src.Models.Product", b =>
+          {
+            b.Property<int>("Id")
+              .ValueGeneratedOnAdd()
+              .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("RefreshTokenExpiresAt")
-                        .HasColumnType("TEXT");
+            b.Property<int>("CategoryId")
+              .HasColumnType("INTEGER");
 
-                    b.Property<string>("RefreshTokenHash")
-                        .HasMaxLength(64)
-                        .HasColumnType("TEXT");
+            b.Property<string>("Name")
+              .IsRequired()
+              .HasMaxLength(150)
+              .HasColumnType("TEXT");
 
-                    b.HasKey("Id");
+            b.Property<decimal>("Price")
+              .HasPrecision(18, 2)
+              .HasColumnType("TEXT");
 
-                    b.HasIndex("Email")
-                        .IsUnique();
+            b.Property<int>("Stock")
+              .HasColumnType("INTEGER");
 
-                    b.ToTable("Users");
-                });
+            b.Property<int>("SupplierId")
+              .HasColumnType("INTEGER");
+
+            b.HasKey("Id");
+
+            b.HasIndex("CategoryId");
+
+            b.HasIndex("SupplierId");
+
+            b.ToTable("Products");
+        });
+
+      modelBuilder.Entity("user_api_csharp.src.Models.Supplier", b =>
+          {
+            b.Property<int>("Id")
+              .ValueGeneratedOnAdd()
+              .HasColumnType("INTEGER");
+
+            b.Property<string>("Contact")
+              .IsRequired()
+              .HasMaxLength(200)
+              .HasColumnType("TEXT");
+
+            b.Property<string>("Name")
+              .IsRequired()
+              .HasMaxLength(120)
+              .HasColumnType("TEXT");
+
+            b.HasKey("Id");
+
+            b.ToTable("Suppliers");
+          });
+
+      modelBuilder.Entity("user_api_csharp.src.Models.User", b =>
+          {
+            b.Property<int>("Id")
+              .ValueGeneratedOnAdd()
+              .HasColumnType("INTEGER");
+
+            b.Property<DateTime>("DateOfBirth")
+              .HasColumnType("TEXT");
+
+            b.Property<string>("Email")
+              .IsRequired()
+              .HasMaxLength(255)
+              .HasColumnType("TEXT");
+
+            b.Property<string>("Name")
+              .IsRequired()
+              .HasMaxLength(100)
+              .HasColumnType("TEXT");
+
+            b.Property<string>("PasswordHash")
+              .IsRequired()
+              .HasMaxLength(64)
+              .HasColumnType("TEXT");
+
+            b.Property<DateTime?>("RefreshTokenExpiresAt")
+              .HasColumnType("TEXT");
+
+            b.Property<string>("RefreshTokenHash")
+              .HasMaxLength(64)
+              .HasColumnType("TEXT");
+
+            b.HasKey("Id");
+
+            b.HasIndex("Email")
+              .IsUnique();
+
+            b.ToTable("Users");
+          });
+
+      modelBuilder.Entity("user_api_csharp.src.Models.Product", b =>
+        {
+          b.HasOne("user_api_csharp.src.Models.Category", "Category")
+            .WithMany("Products")
+            .HasForeignKey("CategoryId")
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired();
+
+          b.HasOne("user_api_csharp.src.Models.Supplier", "Supplier")
+            .WithMany("Products")
+            .HasForeignKey("SupplierId")
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired();
+
+          b.Navigation("Category");
+
+          b.Navigation("Supplier");
+        });
+
+      modelBuilder.Entity("user_api_csharp.src.Models.Category", b =>
+        {
+          b.Navigation("Products");
+        });
+
+      modelBuilder.Entity("user_api_csharp.src.Models.Supplier", b =>
+        {
+          b.Navigation("Products");
+        });
 #pragma warning restore 612, 618
-        }
     }
+  }
 }

@@ -72,6 +72,10 @@ builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IRefreshTokenFactory, RefreshTokenFactory>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<ISupplierService, SupplierService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
